@@ -1,5 +1,2 @@
-git init
-git remote add origin https://github.com/seu-usuario/whatsapp-flow-api.git
-git add .
-git commit -m "API inicial"
-git push -u origin main
+openssl genpkey -algorithm RSA -out private_key.pem -pkeyopt rsa_keygen_bits:2048
+openssl rsa -pubout -in private_key.pem -out public_key.pem
