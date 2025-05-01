@@ -1,14 +1,13 @@
-// server.js com node-forge para descriptografar RSA OAEP SHA-256
+// server.js com descriptografia via crypto nativo (RSA-OAEP SHA-1)
 const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
-const forge = require('node-forge');
 const crypto = require('crypto');
 const app = express();
 const PORT = process.env.PORT;
 
 const VERIFY_TOKEN = 'VERIFY_TOKEN';
-const PRIVATE_KEY_PEM = fs.readFileSync('./private_key.pem', 'utf8');
+const PRIVATE_KEY = fs.readFileSync('./private_key.pem', 'utf8');
 
 app.use(bodyParser.json({ limit: '2mb' }));
 
@@ -26,19 +25,17 @@ app.get('/', (req, res) => {
   }
 });
 
-// Descriptografar com node-forge
 function decryptPayload(encrypted_flow_data, encrypted_aes_key, iv) {
-  const privateKey = forge.pki.privateKeyFromPem(PRIVATE_KEY_PEM);
-  const aesKey = privateKey.decrypt(
-    forge.util.decode64(encrypted_aes_key),
-    'RSA-OAEP',
+  const aesKey = crypto.privateDecrypt(
     {
-      md: forge.md.sha256.create(),
-      mgf1: { md: forge.md.sha256.create() }
-    }
+      key: PRIVATE_KEY,
+      padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+      oaepHash: 'sha1',
+    },
+    Buffer.from(encrypted_aes_key, 'base64')
   );
 
-  const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(aesKey, 'binary'), Buffer.from(iv, 'base64'));
+  const decipher = crypto.createDecipheriv('aes-256-cbc', aesKey, Buffer.from(iv, 'base64'));
   let decrypted = decipher.update(Buffer.from(encrypted_flow_data, 'base64'));
   decrypted = Buffer.concat([decrypted, decipher.final()]);
   return JSON.parse(decrypted.toString());
