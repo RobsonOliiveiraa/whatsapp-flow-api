@@ -1,4 +1,4 @@
-// server.js com suporte à criptografia da Meta
+// server.js com suporte à criptografia da Meta e logs detalhados
 const express = require('express');
 const bodyParser = require('body-parser');
 const crypto = require('crypto');
@@ -25,7 +25,6 @@ app.get('/', (req, res) => {
   }
 });
 
-// Utilitário para descriptografar dados da Meta
 function decryptPayload(encrypted_flow_data, encrypted_aes_key, iv) {
   const aesKey = crypto.privateDecrypt(
     {
@@ -42,7 +41,6 @@ function decryptPayload(encrypted_flow_data, encrypted_aes_key, iv) {
   return JSON.parse(decrypted.toString());
 }
 
-// Utilitário para criptografar a resposta
 function encryptResponse(responseObj, aesKey, iv) {
   const cipher = crypto.createCipheriv('aes-256-cbc', aesKey, Buffer.from(iv, 'base64'));
   let encrypted = cipher.update(JSON.stringify(responseObj));
@@ -50,7 +48,6 @@ function encryptResponse(responseObj, aesKey, iv) {
   return encrypted;
 }
 
-// Respostas por tela
 const SCREEN_RESPONSES = {
   INICIO: { screen: 'INICIO', data: {} },
   ESCOLHA_TIPO_BOLO: { screen: 'ESCOLHA_TIPO_BOLO', data: {} },
@@ -58,18 +55,27 @@ const SCREEN_RESPONSES = {
   ESCOLHA_BOLO_PADRAO: { screen: 'ESCOLHA_BOLO_PADRAO', data: {} },
 };
 
-// Endpoint principal com criptografia
 app.post('/flow-endpoint', (req, res) => {
   try {
+    console.log('📩 Requisição recebida no /flow-endpoint');
     const { encrypted_flow_data, encrypted_aes_key, initial_vector } = req.body;
+
+    console.log('🔐 encrypted_flow_data (base64):', encrypted_flow_data?.slice(0, 50) + '...');
+    console.log('🗝️ encrypted_aes_key (base64):', encrypted_aes_key?.slice(0, 50) + '...');
+    console.log('🔄 initial_vector (base64):', initial_vector);
+
     const payload = decryptPayload(encrypted_flow_data, encrypted_aes_key, initial_vector);
+    console.log('📥 Payload descriptografado:', payload);
 
     const screen = payload?.screen;
     const formData = payload?.data;
+    console.log('🖥️ Tela solicitada:', screen);
 
     let responseData;
     if (screen === 'ESCOLHA_TIPO_BOLO') {
       const motivo = formData?.form_dados_cliente?.motivo?.toLowerCase() || '';
+      console.log('🎯 Motivo identificado:', motivo);
+
       responseData =
         motivo === 'casamento'
           ? SCREEN_RESPONSES.ESCOLHA_BOLO_CASAMENTO
@@ -78,7 +84,6 @@ app.post('/flow-endpoint', (req, res) => {
       responseData = SCREEN_RESPONSES[screen] || { error: 'Tela não reconhecida.' };
     }
 
-    // Recriptografa e envia como resposta
     const aesKey = crypto.privateDecrypt(
       {
         key: PRIVATE_KEY,
@@ -89,15 +94,16 @@ app.post('/flow-endpoint', (req, res) => {
     );
 
     const encryptedResponse = encryptResponse(responseData, aesKey, initial_vector);
+    console.log('📤 Resposta criptografada enviada (base64):', encryptedResponse.toString('base64').slice(0, 60) + '...');
+
     res.set('Content-Type', 'application/octet-stream');
     return res.status(200).send(encryptedResponse);
   } catch (err) {
-    console.error('Erro ao processar a requisição criptografada:', err);
+    console.error('❌ Erro interno ao processar criptografia:', err);
     return res.sendStatus(500);
   }
 });
 
-// Inicializa o servidor
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
