@@ -30,7 +30,7 @@ function decryptPayload(encrypted_flow_data, encrypted_aes_key, iv) {
     {
       key: PRIVATE_KEY,
       padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-      oaepHash: 'sha1',
+      oaepHash: 'sha256',
     },
     Buffer.from(encrypted_aes_key, 'base64')
   );
