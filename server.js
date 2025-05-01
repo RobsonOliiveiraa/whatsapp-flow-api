@@ -1,13 +1,14 @@
-// server.js com suporte à criptografia da Meta e logs detalhados
+// server.js com node-forge para descriptografar RSA OAEP SHA-256
 const express = require('express');
 const bodyParser = require('body-parser');
-const crypto = require('crypto');
 const fs = require('fs');
+const forge = require('node-forge');
+const crypto = require('crypto');
 const app = express();
 const PORT = process.env.PORT;
 
 const VERIFY_TOKEN = 'VERIFY_TOKEN';
-const PRIVATE_KEY = fs.readFileSync('./private_key.pem', 'utf8');
+const PRIVATE_KEY_PEM = fs.readFileSync('./private_key.pem', 'utf8');
 
 app.use(bodyParser.json({ limit: '2mb' }));
 
@@ -25,17 +26,19 @@ app.get('/', (req, res) => {
   }
 });
 
+// Descriptografar com node-forge
 function decryptPayload(encrypted_flow_data, encrypted_aes_key, iv) {
-  const aesKey = crypto.privateDecrypt(
+  const privateKey = forge.pki.privateKeyFromPem(PRIVATE_KEY_PEM);
+  const aesKey = privateKey.decrypt(
+    forge.util.decode64(encrypted_aes_key),
+    'RSA-OAEP',
     {
-      key: PRIVATE_KEY,
-      padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-      oaepHash: 'sha256',
-    },
-    Buffer.from(encrypted_aes_key, 'base64')
+      md: forge.md.sha256.create(),
+      mgf1: { md: forge.md.sha256.create() }
+    }
   );
 
-  const decipher = crypto.createDecipheriv('aes-256-cbc', aesKey, Buffer.from(iv, 'base64'));
+  const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(aesKey, 'binary'), Buffer.from(iv, 'base64'));
   let decrypted = decipher.update(Buffer.from(encrypted_flow_data, 'base64'));
   decrypted = Buffer.concat([decrypted, decipher.final()]);
   return JSON.parse(decrypted.toString());
@@ -84,16 +87,8 @@ app.post('/flow-endpoint', (req, res) => {
       responseData = SCREEN_RESPONSES[screen] || { error: 'Tela não reconhecida.' };
     }
 
-    const aesKey = crypto.privateDecrypt(
-      {
-        key: PRIVATE_KEY,
-        padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-        oaepHash: 'sha256',
-      },
-      Buffer.from(encrypted_aes_key, 'base64')
-    );
-
-    const encryptedResponse = encryptResponse(responseData, aesKey, initial_vector);
+    const aesKeyBuffer = Buffer.from(payload.aes_key || aesKey, 'binary');
+    const encryptedResponse = encryptResponse(responseData, aesKeyBuffer, initial_vector);
     console.log('📤 Resposta criptografada enviada (base64):', encryptedResponse.toString('base64').slice(0, 60) + '...');
 
     res.set('Content-Type', 'application/octet-stream');
