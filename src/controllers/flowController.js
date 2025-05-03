@@ -35,10 +35,13 @@ const handleFlow = (req, res) => {
   const encryptedPayload = req.body.encrypted_payload;
 
   if (!encryptedPayload) {
+    console.error('Erro: Carga útil criptografada não fornecida');
     return res.status(400).send('Carga útil criptografada não fornecida');
   }
 
   try {
+    console.log('Carga útil criptografada recebida (Base64):', encryptedPayload);
+
     // Descriptografar a carga útil usando RSA_PKCS1_OAEP_PADDING
     const decryptedPayload = crypto.privateDecrypt(
       {
