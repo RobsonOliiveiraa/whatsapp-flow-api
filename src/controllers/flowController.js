@@ -5,9 +5,14 @@ const verifySignature = require('../utils/verifySignature');
 
 let publicKey = ''; // Variável para armazenar a chave pública em memória
 
-// Carregar a chave privada
+// Carregar a chave privada usando crypto.createPrivateKey
 const privateKeyPath = path.join(__dirname, '../../private_key.pem');
-const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
+const privateKey = crypto.createPrivateKey({
+  key: fs.readFileSync(privateKeyPath, 'utf8'),
+  format: 'pem',
+  type: 'pkcs1', // Ignorado se o formato for 'pem'
+  passphrase: '', // Adicione a senha aqui, se necessário
+});
 
 const uploadPublicKey = (req, res) => {
   const { key } = req.body;
