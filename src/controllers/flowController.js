@@ -1,7 +1,6 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
-const verifySignature = require('../utils/verifySignature');
 
 let publicKey = ''; // Variável para armazenar a chave pública em memória
 
@@ -14,6 +13,33 @@ const privateKey = crypto.createPrivateKey({
   passphrase: '', // Adicione a senha aqui, se necessário
 });
 console.log('Chave privada carregada com sucesso.');
+
+// Middleware para validar a assinatura das mensagens recebidas
+const verifySignature = (req, res, next) => {
+  const signature = req.headers['x-hub-signature-256']; // Cabeçalho enviado pelo Facebook
+  const payload = JSON.stringify(req.body); // Corpo da requisição
+  const APP_SECRET = process.env.APP_SECRET; // Defina o APP_SECRET no .env
+
+  if (!signature) {
+    console.error('Erro: Assinatura não encontrada no cabeçalho.');
+    return res.status(403).send('Assinatura não encontrada');
+  }
+
+  // Gerar a assinatura esperada
+  const expectedSignature = `sha256=${crypto
+    .createHmac('sha256', APP_SECRET)
+    .update(payload)
+    .digest('hex')}`;
+
+  // Comparar a assinatura recebida com a esperada
+  if (signature !== expectedSignature) {
+    console.error('Erro: Assinatura inválida.');
+    return res.status(403).send('Assinatura inválida');
+  }
+
+  console.log('Assinatura válida.');
+  next(); // Prosseguir para o próximo middleware ou rota
+};
 
 const uploadPublicKey = (req, res) => {
   const { key } = req.body;
@@ -126,4 +152,4 @@ const signFlow = (req, res) => {
   }
 };
 
-module.exports = { uploadPublicKey, handleFlow, validateWebhook, signFlow };
+module.exports = { uploadPublicKey, handleFlow, validateWebhook, signFlow, verifySignature };
