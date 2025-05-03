@@ -95,4 +95,35 @@ const validateWebhook = (req, res) => {
   res.status(400).send('Requisição inválida');
 };
 
-module.exports = { uploadPublicKey, handleFlow, validateWebhook };
+const signFlow = (req, res) => {
+  const flowData = req.body;
+
+  if (!flowData) {
+    console.error('Erro: JSON do fluxo não fornecido.');
+    return res.status(400).send('JSON do fluxo não fornecido');
+  }
+
+  try {
+    console.log('JSON do fluxo recebido:', flowData);
+
+    // Serializar o JSON do fluxo
+    const flowString = JSON.stringify(flowData);
+
+    // Assinar o JSON do fluxo usando a chave privada
+    const signature = crypto.sign("sha256", Buffer.from(flowString), {
+      key: privateKey,
+      padding: crypto.constants.RSA_PKCS1_PADDING,
+    });
+
+    const signatureBase64 = signature.toString('base64');
+    console.log('Assinatura gerada (Base64):', signatureBase64);
+
+    // Retornar a assinatura para o Facebook
+    res.status(200).send({ signature: signatureBase64 });
+  } catch (error) {
+    console.error('Erro ao assinar o JSON do fluxo:', error);
+    res.status(500).send('Erro ao assinar o JSON do fluxo');
+  }
+};
+
+module.exports = { uploadPublicKey, handleFlow, validateWebhook, signFlow };
