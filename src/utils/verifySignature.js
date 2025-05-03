@@ -15,7 +15,8 @@ const verifySignature = (signature, body, publicKey) => {
   verifier.end();
 
   try {
-    const isValid = verifier.verify(publicKey, signature, 'base64');
+    // Certifique-se de que a assinatura está em base64
+    const isValid = verifier.verify(publicKey, Buffer.from(signature.split('=')[1], 'hex'));
     console.log('Assinatura válida:', isValid);
     return isValid;
   } catch (err) {
