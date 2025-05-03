@@ -34,11 +34,12 @@ const handleFlow = (req, res) => {
   }
 
   try {
-    // Descriptografar a carga útil
+    // Descriptografar a carga útil usando RSA_PKCS1_OAEP_PADDING
     const decryptedPayload = crypto.privateDecrypt(
       {
         key: privateKey,
-        padding: crypto.constants.RSA_PKCS1_PADDING,
+        padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+        oaepHash: "sha256", // Algoritmo de hash usado para OAEP
       },
       Buffer.from(encryptedPayload, 'base64')
     );
