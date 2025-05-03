@@ -6,6 +6,11 @@ const verifySignature = (signature, body, publicKey) => {
     return false;
   }
 
+  if (!signature) {
+    console.error('Assinatura não fornecida');
+    return false;
+  }
+
   console.log('Chave pública carregada:', publicKey);
   console.log('Corpo da requisição recebido:', JSON.stringify(body));
   console.log('Assinatura recebida:', signature);
@@ -15,7 +20,6 @@ const verifySignature = (signature, body, publicKey) => {
   verifier.end();
 
   try {
-    // Certifique-se de que a assinatura está em base64
     const isValid = verifier.verify(publicKey, Buffer.from(signature.split('=')[1], 'hex'));
     console.log('Assinatura válida:', isValid);
     return isValid;
