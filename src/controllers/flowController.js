@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const axios = require('axios'); // Adicionado para realizar requisições HTTP
 
 let publicKey = ''; // Variável para armazenar a chave pública em memória
 
@@ -152,4 +153,39 @@ const signFlow = (req, res) => {
   }
 };
 
-module.exports = { uploadPublicKey, handleFlow, validateWebhook, signFlow, verifySignature };
+// Função para enviar a chave pública e a assinatura ao Facebook
+const sendPublicKeyToFacebook = async (req, res) => {
+  try {
+    // Carregar a chave pública do arquivo
+    const publicKey = fs.readFileSync('./public_key.pem', 'utf8');
+
+    // Gerar a assinatura da chave pública usando a chave privada
+    const signature = crypto.sign("sha256", Buffer.from(publicKey), {
+      key: privateKey,
+      padding: crypto.constants.RSA_PKCS1_PADDING,
+    });
+
+    // Configurar a requisição para o Facebook
+    const response = await axios.post(
+      `https://graph.facebook.com/v16.0/${process.env.FACEBOOK_BUSINESS_ID}/encryption_key`,
+      {
+        encryption_key: publicKey,
+        signature: signature.toString('base64'),
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.FACEBOOK_ACCESS_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    console.log('Resposta do Facebook:', response.data);
+    res.status(200).send('Chave pública enviada com sucesso!');
+  } catch (error) {
+    console.error('Erro ao enviar a chave pública para o Facebook:', error.response?.data || error.message);
+    res.status(500).send('Erro ao enviar a chave pública para o Facebook');
+  }
+};
+
+module.exports = { uploadPublicKey, handleFlow, validateWebhook, signFlow, verifySignature, sendPublicKeyToFacebook };
