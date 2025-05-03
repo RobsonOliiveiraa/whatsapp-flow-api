@@ -1,0 +1,183 @@
+{
+    "routing_model": {
+      "INICIO": ["ESCOLHA_TIPO_BOLO"],
+      "ESCOLHA_TIPO_BOLO": ["ESCOLHA_BOLO_CASAMENTO", "ESCOLHA_BOLO_PADRAO"],
+      "ESCOLHA_BOLO_CASAMENTO": [],
+      "ESCOLHA_BOLO_PADRAO": []
+    },
+    "data_api_version": "3.0",
+    "version": "5.0",
+    "screens": [
+      {
+        "id": "INICIO",
+        "title": "Pedido de Bolo",
+        "layout": {
+          "type": "SingleColumnLayout",
+          "children": [
+            {
+              "type": "Form",
+              "name": "form_dados_cliente",
+              "children": [
+                {
+                  "type": "TextSubheading",
+                  "text": "Olá! Vamos começar com algumas informações:"
+                },
+                {
+                  "type": "TextInput",
+                  "name": "nome",
+                  "label": "Qual é o seu nome?",
+                  "input-type": "text",
+                  "required": true
+                },
+                {
+                  "type": "TextInput",
+                  "name": "email",
+                  "label": "Qual é o seu e-mail?",
+                  "input-type": "email",
+                  "required": true
+                },
+                {
+                  "type": "TextInput",
+                  "name": "data_comemorativa",
+                  "label": "Data da comemoração",
+                  "input-type": "text",
+                  "required": true
+                },
+                {
+                  "type": "TextInput",
+                  "name": "motivo",
+                  "label": "Motivo comemoração",
+                  "input-type": "text",
+                  "required": true
+                },
+                {
+                  "type": "Footer",
+                  "label": "Avançar",
+                  "on-click-action": {
+                    "name": "navigate",
+                    "next": {
+                      "type": "screen",
+                      "name": "ESCOLHA_TIPO_BOLO"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "ESCOLHA_TIPO_BOLO",
+        "title": "Redirecionando...",
+        "layout": {
+          "type": "SingleColumnLayout",
+          "children": [
+            {
+              "type": "TextSubheading",
+              "text": "Aguarde enquanto escolhemos as opções certas para você..."
+            },
+            {
+              "type": "Form",
+              "name": "form_redirect",
+              "children": [
+                {
+                  "type": "Footer",
+                  "label": "Continuar",
+                  "on-click-action": {
+                    "name": "navigate",
+                    "next": {
+                      "type": "screen",
+                      "name": "ESCOLHA_BOLO_PADRAO"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "ESCOLHA_BOLO_CASAMENTO",
+        "title": "Escolha do Bolo (Casamento)",
+        "terminal": true,
+        "layout": {
+          "type": "SingleColumnLayout",
+          "children": [
+            {
+              "type": "Form",
+              "name": "form_escolha_bolo_casamento",
+              "children": [
+                {
+                  "type": "CheckboxGroup",
+                  "label": "Bolos Disponíveis (Casamento)",
+                  "name": "bolo",
+                  "required": true,
+                  "data-source": [
+                    { "id": "c_chantilly", "title": "Chantilly Tradicional" },
+                    { "id": "c_nakedcake", "title": "Naked Cake com Frutas" },
+                    { "id": "c_rosas", "title": "Rosas de Açúcar" },
+                    { "id": "c_branco_neve", "title": "Branco Neve com Damasco" },
+                    { "id": "c_realeza", "title": "Realeza com Pérolas" }
+                  ]
+                },
+                {
+                  "type": "Footer",
+                  "label": "Finalizar Pedido",
+                  "on-click-action": {
+                    "name": "complete",
+                    "payload": {
+                      "bolo_escolhido": "${form_escolha_bolo_casamento.bolo}"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "ESCOLHA_BOLO_PADRAO",
+        "title": "Escolha do Bolo",
+        "terminal": true,
+        "layout": {
+          "type": "SingleColumnLayout",
+          "children": [
+            {
+              "type": "Form",
+              "name": "form_escolha_bolo_padrao",
+              "children": [
+                {
+                  "type": "CheckboxGroup",
+                  "label": "Bolos Disponíveis",
+                  "name": "bolo",
+                  "required": true,
+                  "data-source": [
+                    { "id": "a_chocolate", "title": "Chocolate Clássico" },
+                    { "id": "a_baunilha", "title": "Baunilha com Morango" },
+                    { "id": "a_cenoura", "title": "Cenoura com Chocolate" },
+                    { "id": "a_redvelvet", "title": "Red Velvet" },
+                    { "id": "a_prestigio", "title": "Prestígio" },
+                    { "id": "a_brigadeiro", "title": "Bolo de Brigadeiro" },
+                    { "id": "a_leiteninho", "title": "Leite Ninho com Nutella" },
+                    { "id": "a_mousse", "title": "Mousse de Maracujá" },
+                    { "id": "a_oreo", "title": "Bolo de Oreo" },
+                    { "id": "a_surpresa", "title": "Frutas Vermelhas" }
+                  ]
+                },
+                {
+                  "type": "Footer",
+                  "label": "Finalizar Pedido",
+                  "on-click-action": {
+                    "name": "complete",
+                    "payload": {
+                      "bolo_escolhido": "${form_escolha_bolo_padrao.bolo}"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }

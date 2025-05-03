@@ -43,4 +43,23 @@ const handleFlow = (req, res) => {
   res.status(200).send('Fluxo processado com sucesso');
 };
 
-module.exports = { uploadPublicKey, handleFlow };
+// Token de verificação definido por você
+const VERIFY_TOKEN = "l&Ch1532X_(T";
+
+const validateWebhook = (req, res) => {
+  const mode = req.query['hub.mode'];
+  const token = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
+
+  if (mode && token) {
+    if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+      console.log('Webhook verificado com sucesso!');
+      return res.status(200).send(challenge); // Retorna o desafio para o Facebook
+    } else {
+      return res.status(403).send('Token de verificação inválido');
+    }
+  }
+  res.status(400).send('Requisição inválida');
+};
+
+module.exports = { uploadPublicKey, handleFlow, validateWebhook };

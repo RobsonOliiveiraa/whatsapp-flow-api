@@ -1,5 +1,5 @@
 const express = require('express');
-const { handleFlow, uploadPublicKey } = require('../controllers/flowController');
+const { handleFlow, uploadPublicKey, validateWebhook } = require('../controllers/flowController');
 
 const router = express.Router();
 
@@ -8,5 +8,8 @@ router.post('/', handleFlow);
 
 // Endpoint para upload da chave pública
 router.post('/upload-key', uploadPublicKey);
+
+// Endpoint para validação do webhook
+router.get('/webhook', validateWebhook);
 
 module.exports = router;
