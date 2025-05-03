@@ -1,8 +1,13 @@
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const verifySignature = require('../utils/verifySignature');
 
 let publicKey = ''; // Variável para armazenar a chave pública em memória
+
+// Carregar a chave privada
+const privateKeyPath = path.join(__dirname, '../../private_key.pem');
+const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
 
 const uploadPublicKey = (req, res) => {
   const { key } = req.body;
@@ -22,25 +27,31 @@ const uploadPublicKey = (req, res) => {
 };
 
 const handleFlow = (req, res) => {
-  const signature = req.headers['x-hub-signature-256'];
-  const body = req.body;
+  const encryptedPayload = req.body.encrypted_payload;
 
-  // Carregar a chave pública do arquivo, se não estiver em memória
-  if (!publicKey) {
-    const filePath = path.join(__dirname, '../../public_key.pem');
-    if (fs.existsSync(filePath)) {
-      publicKey = fs.readFileSync(filePath, 'utf8');
-    } else {
-      return res.status(500).send('Chave pública não encontrada');
-    }
+  if (!encryptedPayload) {
+    return res.status(400).send('Carga útil criptografada não fornecida');
   }
 
-  if (!verifySignature(signature, body, publicKey)) {
-    return res.status(401).send('Assinatura inválida');
-  }
+  try {
+    // Descriptografar a carga útil
+    const decryptedPayload = crypto.privateDecrypt(
+      {
+        key: privateKey,
+        padding: crypto.constants.RSA_PKCS1_PADDING,
+      },
+      Buffer.from(encryptedPayload, 'base64')
+    );
 
-  console.log('Fluxo recebido:', body);
-  res.status(200).send('Fluxo processado com sucesso');
+    const payload = JSON.parse(decryptedPayload.toString('utf8'));
+    console.log('Payload descriptografado:', payload);
+
+    // Processar o payload
+    res.status(200).send('Fluxo processado com sucesso');
+  } catch (error) {
+    console.error('Erro ao descriptografar a carga útil:', error);
+    res.status(500).send('Erro ao processar a carga útil');
+  }
 };
 
 // Token de verificação definido por você
