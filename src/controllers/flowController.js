@@ -156,6 +156,9 @@ const signFlow = (req, res) => {
 // Função para enviar a chave pública e a assinatura ao Facebook
 const sendPublicKeyToFacebook = async (req, res) => {
   try {
+    // Log para verificar o token de acesso
+    console.log('FACEBOOK_ACCESS_TOKEN:', process.env.FACEBOOK_ACCESS_TOKEN);
+
     // Carregar a chave pública do arquivo
     const publicKey = fs.readFileSync('./public_key.pem', 'utf8');
 
