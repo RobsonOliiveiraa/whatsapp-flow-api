@@ -168,6 +168,12 @@ const sendPublicKeyToFacebook = async (req, res) => {
       padding: crypto.constants.RSA_PKCS1_PADDING,
     });
 
+    // Gerar o appsecret_proof
+    const appsecretProof = crypto
+      .createHmac('sha256', process.env.APP_SECRET)
+      .update(process.env.FACEBOOK_ACCESS_TOKEN)
+      .digest('hex');
+
     // Configurar a requisição para o Facebook
     const response = await axios.post(
       `https://graph.facebook.com/v16.0/${process.env.FACEBOOK_BUSINESS_ID}/encryption_key`,
@@ -179,6 +185,9 @@ const sendPublicKeyToFacebook = async (req, res) => {
         headers: {
           Authorization: `Bearer ${process.env.FACEBOOK_ACCESS_TOKEN}`,
           'Content-Type': 'application/json',
+        },
+        params: {
+          appsecret_proof: appsecretProof, // Adiciona o appsecret_proof como parâmetro
         },
       }
     );
