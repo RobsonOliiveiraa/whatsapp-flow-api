@@ -156,8 +156,9 @@ const signFlow = (req, res) => {
 // Função para enviar a chave pública e a assinatura ao Facebook
 const sendPublicKeyToFacebook = async (req, res) => {
   try {
-    // Log para verificar o token de acesso
+    // Log para verificar o token de acesso e o APP_SECRET
     console.log('FACEBOOK_ACCESS_TOKEN:', process.env.FACEBOOK_ACCESS_TOKEN);
+    console.log('APP_SECRET:', process.env.APP_SECRET);
 
     // Carregar a chave pública do arquivo
     const publicKey = fs.readFileSync('./public_key.pem', 'utf8');
@@ -173,6 +174,9 @@ const sendPublicKeyToFacebook = async (req, res) => {
       .createHmac('sha256', process.env.APP_SECRET)
       .update(process.env.FACEBOOK_ACCESS_TOKEN)
       .digest('hex');
+
+    // Log para verificar o appsecret_proof gerado
+    console.log('appsecret_proof:', appsecretProof);
 
     // Configurar a requisição para o Facebook
     const response = await axios.post(
