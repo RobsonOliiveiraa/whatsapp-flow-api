@@ -156,42 +156,40 @@ const signFlow = (req, res) => {
 // Função para enviar a chave pública e a assinatura ao Facebook
 const sendPublicKeyToFacebook = async (req, res) => {
   try {
-    // Log para verificar o token de acesso e o APP_SECRET
     console.log('FACEBOOK_ACCESS_TOKEN:', process.env.FACEBOOK_ACCESS_TOKEN);
     console.log('APP_SECRET:', process.env.APP_SECRET);
 
-    // Carregar a chave pública do arquivo
     const publicKey = fs.readFileSync('./public_key.pem', 'utf8');
 
-    // Gerar a assinatura da chave pública usando a chave privada
     const signature = crypto.sign("sha256", Buffer.from(publicKey), {
       key: privateKey,
       padding: crypto.constants.RSA_PKCS1_PADDING,
     });
 
-    // Gerar o appsecret_proof
     const appsecretProof = crypto
       .createHmac('sha256', process.env.APP_SECRET)
       .update(process.env.FACEBOOK_ACCESS_TOKEN)
       .digest('hex');
 
-    // Log para verificar o appsecret_proof gerado
     console.log('appsecret_proof:', appsecretProof);
 
-    // Configurar a requisição para o Facebook
+    const requestBody = {
+      encryption_key: publicKey,
+      signature: signature.toString('base64'),
+    };
+
+    console.log('Request Body:', requestBody);
+
     const response = await axios.post(
       `https://graph.facebook.com/v16.0/${process.env.FACEBOOK_BUSINESS_ID}/encryption_key`,
-      {
-        encryption_key: publicKey,
-        signature: signature.toString('base64'),
-      },
+      requestBody,
       {
         headers: {
           Authorization: `Bearer ${process.env.FACEBOOK_ACCESS_TOKEN}`,
           'Content-Type': 'application/json',
         },
         params: {
-          appsecret_proof: appsecretProof, // Adiciona o appsecret_proof como parâmetro
+          appsecret_proof: appsecretProof,
         },
       }
     );
