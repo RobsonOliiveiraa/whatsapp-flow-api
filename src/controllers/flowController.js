@@ -86,8 +86,51 @@ const handleFlow = (req, res) => {
     const payload = JSON.parse(decryptedPayload.toString('utf8'));
     console.log('Payload descriptografado com sucesso:', payload);
 
-    // Processar o payload
-    res.status(200).send('Fluxo processado com sucesso');
+    if (!payload.action || !payload.flow_token || !payload.version) {
+      console.error('Erro: Payload descriptografado está incompleto.');
+      return res.status(400).send('Payload inválido');
+    }
+
+    const SCREEN_RESPONSES = {
+      INICIO: {
+        screen: "ESCOLHA_TIPO_BOLO",
+        data: {},
+      },
+      ESCOLHA_TIPO_BOLO: {
+        screen: "ESCOLHA_BOLO_CASAMENTO",
+        data: {},
+      },
+      ESCOLHA_BOLO_CASAMENTO: {
+        screen: "SUCCESS",
+        data: {
+          extension_message_response: {
+            params: {
+              flow_token: "REPLACE_FLOW_TOKEN",
+              some_param_name: "PASS_CUSTOM_VALUE",
+            },
+          },
+        },
+      },
+    };
+
+    const currentScreen = payload.screen;
+    const response = SCREEN_RESPONSES[currentScreen];
+
+    if (!response) {
+      console.error('Erro: Tela atual não encontrada nas respostas.');
+      return res.status(400).send('Tela inválida');
+    }
+
+    const encryptedResponse = crypto.publicEncrypt(
+      {
+        key: publicKey,
+        padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+        oaepHash: "sha256",
+      },
+      Buffer.from(JSON.stringify(response))
+    );
+
+    res.status(200).send({ encrypted_response: encryptedResponse.toString('base64') });
   } catch (error) {
     console.error('Erro ao descriptografar a carga útil:', error);
     console.error('Detalhes do erro:', {
