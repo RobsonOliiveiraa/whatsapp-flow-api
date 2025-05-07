@@ -14,7 +14,7 @@ router.post('/upload-key', uploadPublicKey);
 // Rota para assinar o JSON do fluxo
 router.post('/sign-flow', signFlow);
 
-// Rota para enviar a chave pública e assinatura ao Facebook
-router.post('/send-public-key', sendPublicKeyToFacebook);
+// Rota para enviar a chave pública ao Facebook
+router.post('/sendPublicKey', sendPublicKeyToFacebook);
 
 module.exports = router;
