@@ -228,7 +228,7 @@ const sendPublicKeyToFacebook = (req, res) => {
       .digest('hex');
 
     axios.post(
-      `https://graph.facebook.com/v16.0/${process.env.FACEBOOK_BUSINESS_ID}/encryption_keys`,
+      `https://graph.facebook.com/v22.0/${process.env.FACEBOOK_BUSINESS_ID}/encryption_keys`, // Atualizado para v22.0
       {
         encryption_key: publicKey, // Campo correto conforme a documentação
       },
