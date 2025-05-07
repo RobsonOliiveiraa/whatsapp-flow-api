@@ -1,8 +1,7 @@
 const crypto = require('crypto');
 
 const appSecret = '71151079bb41abd69608ae0b28f2f815'; // Substitua pelo seu APP_SECRET
-const accessToken = 'EAATK06J9ZAV8BO8NAqmgEUjGKIE0yZEAATK06J9ZAV8BOzBewfh5dlHToZATZCqnA5Th1xQ6gObd9wiytYYGnz1ZA7OX8uSQl18xovw9WOoSr8lkpQZChOTGOqw88aty3ZAc9B2c1QTNnKAj5xoucdclZBdGw2GEfJDefUwi9zft6kIZCW32jYkrKCZCXBFrdtmIJZARWyoNx2BFmTCY77JrW8ZBfZAyZAhH8nu0v0d1qJOZBqlyoukNx2EQGBPd7JxlCqOcZD';
-
+const accessToken = 'EAATK06J9ZAV8BO8IOy36buyU66bmN49qSaDCap3HopMJMaTA4m1ic2SVsfslF6uqqcZA5FvRhAU7NmViPfDtTn9tAeBf2Kp0ENkQGqJa8hmVy26r5Ej5WAzBjk2WYhvt6XfI5vnoa6hedCHlNfjqYJHY0P4El0AEOdlUGCHkq2imXgIJFCL6GLZB1k62cbUaD0M6jWvqmpP0ZAgnrdXXO9mZBx776tgZDZD';
 const appsecretProof = crypto
   .createHmac('sha256', appSecret)
   .update(accessToken)
