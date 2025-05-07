@@ -15,6 +15,14 @@ const privateKey = crypto.createPrivateKey({
 });
 console.log('Chave privada carregada com sucesso.');
 
+// Carregar a chave pública do arquivo
+const publicKeyPath = path.join(__dirname, '../../public_key.pem');
+if (!fs.existsSync(publicKeyPath)) {
+  console.error('Erro: Arquivo public_key.pem não encontrado.');
+  process.exit(1); // Finaliza o processo caso o arquivo não seja encontrado
+}
+publicKey = fs.readFileSync(publicKeyPath, 'utf8');
+
 // Middleware para validar a assinatura das mensagens recebidas
 const verifySignature = (req, res, next) => {
   const signature = req.headers['x-hub-signature-256']; // Cabeçalho enviado pelo Facebook
@@ -86,9 +94,17 @@ const handleFlow = (req, res) => {
     const payload = JSON.parse(decryptedPayload.toString('utf8'));
     console.log('Payload descriptografado com sucesso:', payload);
 
-    if (!payload.action || !payload.flow_token || !payload.version) {
-      console.error('Erro: Payload descriptografado está incompleto.');
-      return res.status(400).send('Payload inválido');
+    if (!payload.action) {
+      console.error('Erro: Campo "action" ausente no payload.');
+      return res.status(400).send('Campo "action" ausente');
+    }
+    if (!payload.flow_token) {
+      console.error('Erro: Campo "flow_token" ausente no payload.');
+      return res.status(400).send('Campo "flow_token" ausente');
+    }
+    if (!payload.version) {
+      console.error('Erro: Campo "version" ausente no payload.');
+      return res.status(400).send('Campo "version" ausente');
     }
 
     const SCREEN_RESPONSES = {
@@ -241,7 +257,10 @@ const sendPublicKeyToFacebook = async (req, res) => {
     res.status(200).send('Chave pública enviada com sucesso!');
   } catch (error) {
     console.error('Erro ao enviar a chave pública para o Facebook:', error.response?.data || error.message);
-    res.status(500).send('Erro ao enviar a chave pública para o Facebook');
+    res.status(500).send({
+      message: 'Erro ao enviar a chave pública para o Facebook',
+      details: error.response?.data || error.message,
+    });
   }
 };
 

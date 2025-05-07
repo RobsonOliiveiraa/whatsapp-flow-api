@@ -2,19 +2,19 @@ const express = require('express');
 const router = express.Router();
 const { handleFlow, uploadPublicKey, validateWebhook, signFlow, verifySignature, sendPublicKeyToFacebook } = require('../controllers/flowController');
 
-// Endpoint para processar o fluxo com validação de assinatura
+// Rota para processar o webhook do Facebook
 router.post('/webhook', verifySignature, handleFlow);
 
-// Endpoint para validação inicial do webhook (hub.challenge)
+// Rota para validação inicial do webhook (hub.challenge)
 router.get('/webhook', validateWebhook);
 
-// Endpoint para upload da chave pública
+// Rota para carregar a chave pública
 router.post('/upload-key', uploadPublicKey);
 
-// Endpoint para assinar o JSON do fluxo
+// Rota para assinar o JSON do fluxo
 router.post('/sign-flow', signFlow);
 
-// Endpoint para enviar a chave pública e assinatura ao Facebook
+// Rota para enviar a chave pública e assinatura ao Facebook
 router.post('/send-public-key', sendPublicKeyToFacebook);
 
 module.exports = router;
