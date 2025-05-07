@@ -213,35 +213,25 @@ const signFlow = (req, res) => {
 };
 
 // Função para enviar a chave pública e a assinatura ao Facebook
-const sendPublicKeyToFacebook = async (req, res) => {
+const sendPublicKeyToFacebook = (req, res) => {
   try {
-    console.log('FACEBOOK_ACCESS_TOKEN:', process.env.FACEBOOK_ACCESS_TOKEN);
-    console.log('APP_SECRET:', process.env.APP_SECRET);
+    const publicKeyPath = path.join(__dirname, '../../public_key.pem');
+    if (!fs.existsSync(publicKeyPath)) {
+      console.error('Erro: Arquivo public_key.pem não encontrado.');
+      return res.status(500).send('Chave pública não encontrada.');
+    }
 
-    const publicKey = fs.readFileSync('./public_key.pem', 'utf8');
-
-    const signature = crypto.sign("sha256", Buffer.from(publicKey), {
-      key: privateKey,
-      padding: crypto.constants.RSA_PKCS1_PADDING,
-    });
-
+    const publicKey = fs.readFileSync(publicKeyPath, 'utf8');
     const appsecretProof = crypto
       .createHmac('sha256', process.env.APP_SECRET)
       .update(process.env.FACEBOOK_ACCESS_TOKEN)
       .digest('hex');
 
-    console.log('appsecret_proof:', appsecretProof);
-
-    const requestBody = {
-      encryption_key: publicKey,
-      signature: signature.toString('base64'),
-    };
-
-    console.log('Request Body:', requestBody);
-
-    const response = await axios.post(
-      `https://graph.facebook.com/v16.0/${process.env.FACEBOOK_BUSINESS_ID}/encryption_key`,
-      requestBody,
+    axios.post(
+      `https://graph.facebook.com/v16.0/${process.env.FACEBOOK_BUSINESS_ID}/encryption_keys`,
+      {
+        encryption_key: publicKey, // Campo correto conforme a documentação
+      },
       {
         headers: {
           Authorization: `Bearer ${process.env.FACEBOOK_ACCESS_TOKEN}`,
@@ -251,16 +241,18 @@ const sendPublicKeyToFacebook = async (req, res) => {
           appsecret_proof: appsecretProof,
         },
       }
-    );
-
-    console.log('Resposta do Facebook:', response.data);
-    res.status(200).send('Chave pública enviada com sucesso!');
+    )
+      .then(response => {
+        console.log('Chave pública enviada com sucesso:', response.data);
+        res.status(200).send('Chave pública enviada com sucesso.');
+      })
+      .catch(error => {
+        console.error('Erro ao enviar a chave pública para o Facebook:', error.response?.data || error.message);
+        res.status(500).send('Erro ao enviar a chave pública.');
+      });
   } catch (error) {
-    console.error('Erro ao enviar a chave pública para o Facebook:', error.response?.data || error.message);
-    res.status(500).send({
-      message: 'Erro ao enviar a chave pública para o Facebook',
-      details: error.response?.data || error.message,
-    });
+    console.error('Erro interno no servidor:', error.message);
+    res.status(500).send('Erro interno no servidor.');
   }
 };
 
