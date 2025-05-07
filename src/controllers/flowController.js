@@ -166,11 +166,9 @@ const validateWebhook = (req, res) => {
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
 
-  console.log('Requisição de validação recebida:', { mode, token, challenge });
-
   if (mode && token) {
-    if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-      console.log('Webhook verificado com sucesso!');
+    if (mode === 'subscribe' && token === process.env.VERIFY_TOKEN) {
+      console.log('Webhook validado com sucesso!');
       return res.status(200).send(challenge); // Retorna o desafio para o Facebook
     } else {
       console.error('Erro: Token de verificação inválido.');
