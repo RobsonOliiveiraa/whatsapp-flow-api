@@ -163,10 +163,13 @@ const VERIFY_TOKEN = "l&Ch1532X_(T";
 
 const validateWebhook = (req, res) => {
   console.log('Requisição recebida no webhook:', req.query);
-  
+
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
+
+  console.log('Token esperado:', process.env.VERIFY_TOKEN); // Log para depuração
+  console.log('Token recebido:', token); // Log para depuração
 
   if (mode && token) {
     if (mode === 'subscribe' && token === process.env.VERIFY_TOKEN) {
