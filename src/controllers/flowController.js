@@ -246,11 +246,15 @@ const sendPublicKeyToFacebook = async () => {
     }
     const publicKey = fs.readFileSync(publicKeyPath, 'utf8');
     console.log('Chave pública carregada com sucesso.');
+    console.log('Conteúdo da chave pública:', publicKey);
 
     // Envia a chave pública para o Facebook
+    const url = `https://graph.facebook.com/v22.0/me?${businessId}/encryption_keys`;
+    console.log('URL final para envio:', url);
+
     console.log('Enviando a chave pública para o Facebook...');
     const response = await axios.post(
-      `https://graph.facebook.com/v22.0/${businessId}/encryption_keys`,
+      url,
       {
         encryption_key: publicKey,
       },
