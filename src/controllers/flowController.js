@@ -216,47 +216,67 @@ const signFlow = (req, res) => {
 };
 
 // Função para enviar a chave pública e a assinatura ao Facebook
-const sendPublicKeyToFacebook = (req, res) => {
+const sendPublicKeyToFacebook = async () => {
   try {
+    console.log('Iniciando o envio da chave pública para o Facebook...');
+
+    // Carrega as variáveis de ambiente
+    const appSecret = process.env.APP_SECRET;
+    const accessToken = process.env.FACEBOOK_ACCESS_TOKEN;
+    const businessId = process.env.FACEBOOK_BUSINESS_ID;
+
+    console.log('APP_SECRET:', appSecret ? 'Carregado com sucesso' : 'Não encontrado');
+    console.log('FACEBOOK_ACCESS_TOKEN:', accessToken ? 'Carregado com sucesso' : 'Não encontrado');
+    console.log('FACEBOOK_BUSINESS_ID:', businessId ? 'Carregado com sucesso' : 'Não encontrado');
+
+    // Gera o appsecret_proof
+    console.log('Gerando o appsecret_proof...');
+    const appsecretProof = crypto
+      .createHmac('sha256', appSecret)
+      .update(accessToken)
+      .digest('hex');
+    console.log('appsecret_proof gerado:', appsecretProof);
+
+    // Carrega a chave pública
+    console.log('Carregando a chave pública...');
     const publicKeyPath = path.join(__dirname, '../../public_key.pem');
     if (!fs.existsSync(publicKeyPath)) {
       console.error('Erro: Arquivo public_key.pem não encontrado.');
-      return res.status(500).send('Chave pública não encontrada.');
+      return;
     }
-
     const publicKey = fs.readFileSync(publicKeyPath, 'utf8');
-    const appsecretProof = crypto
-      .createHmac('sha256', process.env.APP_SECRET)
-      .update(process.env.FACEBOOK_ACCESS_TOKEN)
-      .digest('hex');
+    console.log('Chave pública carregada com sucesso.');
 
-    axios.post(
-      `https://graph.facebook.com/v22.0/me?${process.env.FACEBOOK_BUSINESS_ID}/encryption_keys`,
+    // Envia a chave pública para o Facebook
+    console.log('Enviando a chave pública para o Facebook...');
+    const response = await axios.post(
+      `https://graph.facebook.com/v22.0/${businessId}/encryption_keys`,
       {
-        encryption_key: publicKey, // Campo correto conforme a documentação
+        encryption_key: publicKey,
       },
       {
         headers: {
-          Authorization: `Bearer ${process.env.FACEBOOK_ACCESS_TOKEN}`,
+          Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
         params: {
           appsecret_proof: appsecretProof,
         },
       }
-    )
-      .then(response => {
-        console.log('Chave pública enviada com sucesso:', response.data);
-        res.status(200).send('Chave pública enviada com sucesso.');
-      })
-      .catch(error => {
-        console.error('Erro ao enviar a chave pública para o Facebook:', error.response?.data || error.message);
-        res.status(500).send('Erro ao enviar a chave pública.');
-      });
+    );
+
+    console.log('Chave pública enviada com sucesso:', response.data);
   } catch (error) {
-    console.error('Erro interno no servidor:', error.message);
-    res.status(500).send('Erro interno no servidor.');
+    console.error('Erro ao enviar a chave pública para o Facebook:');
+    if (error.response) {
+      console.error('Status:', error.response.status);
+      console.error('Dados do erro:', error.response.data);
+    } else {
+      console.error('Mensagem de erro:', error.message);
+    }
   }
 };
+
+sendPublicKeyToFacebook();
 
 module.exports = { uploadPublicKey, handleFlow, validateWebhook, signFlow, verifySignature, sendPublicKeyToFacebook };
